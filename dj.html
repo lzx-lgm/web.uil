@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>外来人员访问503宿舍登记表</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="w-full max-w-lg bg-white rounded-2xl shadow-lg p-6" id="app">
+        <!-- 登记表页面 -->
+        <div id="registrationPage">
+            <h1 class="text-2xl font-bold mb-4 text-center">外来人员访问503宿舍登记表</h1>
+            <form id="registrationForm" class="space-y-4">
+                <input type="text" id="visitorName" placeholder="姓名" class="w-full p-2 border rounded-lg" required>
+                <input type="text" id="contact" placeholder="联系方式" class="w-full p-2 border rounded-lg" required>
+                <input type="datetime-local" id="visitTime" class="w-full p-2 border rounded-lg" required>
+                <textarea id="visitReason" placeholder="访问原因" class="w-full p-2 border rounded-lg" rows="4" required></textarea>
+                <button type="submit" class="w-full mt-4 bg-blue-500 text-white p-2 rounded-lg">提交</button>
+            </form>
+            <div id="successMessage" class="mt-4 text-center text-green-600 hidden">登记成功！</div>
+            <button id="adminButton" class="mt-4 w-full bg-gray-500 text-white p-2 rounded-lg">管理员查看</button>
+        </div>
+
+        <!-- 管理员查看页面 -->
+        <div id="adminPage" class="hidden">
+            <h1 class="text-2xl font-bold mb-4 text-center">来访名单</h1>
+            <input type="password" id="adminPassword" placeholder="输入管理员密码" class="w-full p-2 border rounded-lg mb-4">
+            <button id="viewListButton" class="w-full bg-blue-500 text-white p-2 rounded-lg mb-4">查看名单</button>
+            <div id="visitorList"></div>
+            <button id="backButton" class="mt-4 w-full bg-gray-500 text-white p-2 rounded-lg">返回登记页面</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('registrationForm');
+            const successMessage = document.getElementById('successMessage');
+            const visitorList = document.getElementById('visitorList');
+
+            const registrationPage = document.getElementById('registrationPage');
+            const adminPage = document.getElementById('adminPage');
+            const adminButton = document.getElementById('adminButton');
+            const backButton = document.getElementById('backButton');
+            const viewListButton = document.getElementById('viewListButton');
+
+            const ADMIN_PASSWORD = "123456";
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();  // 阻止表单的默认提交行为
+                
+                // 获取表单数据
+                const visitorData = {
+                    visitorName: document.getElementById('visitorName').value,
+                    contact: document.getElementById('contact').value,
+                    visitTime: document.getElementById('visitTime').value,
+                    visitReason: document.getElementById('visitReason').value
+                };
+
+                // 获取本地存储中的数据，或者初始化为一个空数组
+                let existingData = localStorage.getItem('visitorData');
+                existingData = existingData ? JSON.parse(existingData) : [];  // 确保数据是数组
+
+                // 如果existingData不是数组，初始化为空数组
+                if (!Array.isArray(existingData)) {
+                    existingData = [];
+                }
+
+                existingData.push(visitorData);
+                localStorage.setItem('visitorData', JSON.stringify(existingData));
+
+                // 清空表单
+                form.reset();
+
+                // 显示成功消息
+                successMessage.classList.remove('hidden');
+                setTimeout(() => successMessage.classList.add('hidden'), 3000);
+            });
+
+            // 管理员查看按钮
+            adminButton.addEventListener('click', () => {
+                registrationPage.classList.add('hidden');
+                adminPage.classList.remove('hidden');
+            });
+
+            // 返回按钮
+            backButton.addEventListener('click', () => {
+                adminPage.classList.add('hidden');
+                registrationPage.classList.remove('hidden');
+            });
+
+            // 查看名单按钮
+            viewListButton.addEventListener('click', () => {
+                const enteredPassword = document.getElementById('adminPassword').value;
+                if (enteredPassword === ADMIN_PASSWORD) {
+                    // 从localStorage获取来访数据
+                    let existingData = localStorage.getItem('visitorData');
+                    existingData = existingData ? JSON.parse(existingData) : [];  // 确保数据是数组
+
+                    // 如果existingData不是数组，初始化为空数组
+                    if (!Array.isArray(existingData)) {
+                        existingData = [];
+                    }
+
+                    if (existingData.length === 0) {
+                        visitorList.innerHTML = '<p>暂无来访记录。</p>';
+                    } else {
+                        // 构造来访记录列表
+                        visitorList.innerHTML = existingData.map((data, index) => {
+                            return `
+                                <div class="p-2 border-b">
+                                    <strong>${index + 1}. 姓名：</strong> ${data.visitorName}<br>
+                                    <strong>联系方式：</strong> ${data.contact}<br>
+                                    <strong>访问时间：</strong> ${data.visitTime}<br>
+                                    <strong>访问原因：</strong> ${data.visitReason}
+                                </div>
+                            `;
+                        }).join('');
+                    }
+                } else {
+                    alert('密码错误！');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
